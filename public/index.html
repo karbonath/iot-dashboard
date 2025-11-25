@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .pulse-glow {
+            animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img src="logo.png" alt="Restaurant Icon" class="h-16 w-16">
+                    <div>
+                        <h1 class="text-3xl font-bold text-[#01bfee]">
+                            Mie Gacuan Dashboard
+                        </h1>
+                        <p class="text-sm text-gray-600">Real-time Visitor Monitoring</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="bg-green-100 px-4 py-2 rounded-lg">
+                        <span class="text-sm text-green-700 font-medium">
+                            <i class="fas fa-circle pulse-glow text-green-500"></i> Live
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Statistics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Current Visitors Card -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-blue-100 p-3 rounded-xl">
+                        <i class="fas fa-users text-blue-600 text-2xl"></i>
+                    </div>
+                    <span id="occupancy-badge" class="px-3 py-1 rounded-full text-xs font-semibold"></span>
+                </div>
+                <p class="text-gray-600 text-sm mb-1">Current Visitors</p>
+                <h2 id="current-visitors" class="text-4xl font-bold text-gray-800">0</h2>
+                <p class="text-xs text-gray-500 mt-2">
+                    <span id="last-update-text">Just now</span>
+                </p>
+            </div>
+
+            <!-- Capacity Card -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-purple-100 p-3 rounded-xl">
+                        <i class="fas fa-chair text-purple-600 text-2xl"></i>
+                    </div>
+                </div>
+                <p class="text-gray-600 text-sm mb-1">Available Seats</p>
+                <h2 id="available-seats" class="text-4xl font-bold text-gray-800">0</h2>
+                <p class="text-xs text-gray-500 mt-2">
+                    Max Capacity: <span id="max-capacity">100</span>
+                </p>
+            </div>
+
+            <!-- Occupancy Rate Card -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="bg-green-100 p-3 rounded-xl">
+                        <i class="fas fa-chart-pie text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+                <p class="text-gray-600 text-sm mb-1">Occupancy Rate</p>
+                <h2 id="occupancy-rate" class="text-4xl font-bold text-gray-800">0%</h2>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-3">
+                    <div id="occupancy-bar" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Status Card -->
+            <div class="bg-white rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-shadow duration-300">
+                <div class="flex items-center justify-between mb-4">
+                    <div id="status-icon-bg" class="bg-green-100 p-3 rounded-xl">
+                        <i id="status-icon" class="fas fa-check-circle text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+                <p class="text-gray-600 text-sm mb-1">Restaurant Status</p>
+                <h2 id="restaurant-status" class="text-2xl font-bold text-green-600">Available</h2>
+                <p class="text-xs text-gray-500 mt-2">
+                    <span id="status-message">Seats available</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Real-time Visitors Chart -->
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                        Real-time Visitors
+                    </h3>
+                    <span class="text-sm text-gray-500">Last 30 entries</span>
+                </div>
+                <div class="h-64">
+                    <canvas id="visitorsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Hourly Statistics Chart -->
+            <div class="bg-white rounded-2xl shadow-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-clock text-purple-600 mr-2"></i>
+                        Today's Hourly Stats
+                    </h3>
+                    <span class="text-sm text-gray-500">Average visitors</span>
+                </div>
+                <div class="h-64">
+                    <canvas id="hourlyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-sliders-h text-indigo-600 mr-2"></i>
+                Control Panel
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <button onclick="updateVisitors('enter', 1)" 
+                        class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                    <i class="fas fa-plus mr-2"></i> Enter (+1)
+                </button>
+                <button onclick="updateVisitors('exit', 1)" 
+                        class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                    <i class="fas fa-minus mr-2"></i> Exit (-1)
+                </button>
+                <button onclick="simulateVisitors()" 
+                        class="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                    <i class="fas fa-random mr-2"></i> Simulate
+                </button>
+                <button onclick="resetVisitors()" 
+                        class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                    <i class="fas fa-redo mr-2"></i> Reset
+                </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 pt-5">
+                <div>
+                    <input type="text" id="espconnect" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full h-full p-2.5" placeholder="ESP32 SSE API Endpoint Address..." value="http://192.168.1.14:81/events" required />
+                </div>
+                <button id="connectBtn" onclick="connectToESP32(document.getElementById('espconnect').value)" 
+                        class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105">
+                    <i class="fa-solid fa-link"></i> Connect
+                </button>
+            </div>
+            <div id="espStatus" class="flex justify-center align-center pt-3 hidden">
+                <p id="espStatusText"><i class="fa-solid fa-wifi pe-3"></i>Connecting...</p>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-2xl shadow-xl p-6">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-history text-orange-600 mr-2"></i>
+                Recent Activity
+            </h3>
+            <div id="activity-list" class="space-y-2 max-h-64 overflow-y-auto">
+                <!-- Activity items will be inserted here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white shadow-lg mt-12">
+        <div class="container mx-auto px-4 py-6">
+            <div class="text-center text-gray-600">
+                <p class="text-sm">
+                    <i class="fas fa-server mr-1"></i> 
+                    Restaurant Dashboard v1.0 | 
+                    <span id="footer-time" class="font-mono"></span>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global variables
+        let visitorsChart;
+        let hourlyChart;
+        let activityData = [];
+
+        // Initialize charts
+        function initCharts() {
+            // Visitors Chart
+            const visitorsCtx = document.getElementById('visitorsChart').getContext('2d');
+            visitorsChart = new Chart(visitorsCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Visitors',
+                        data: [],
+                        borderColor: 'rgb(59, 130, 246)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 3,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 10
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Hourly Chart
+            const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+            hourlyChart = new Chart(hourlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                    datasets: [{
+                        label: 'Avg Visitors',
+                        data: Array(24).fill(0),
+                        backgroundColor: 'rgba(147, 51, 234, 0.6)',
+                        borderColor: 'rgb(147, 51, 234)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update dashboard with status data
+        function updateDashboard(data) {
+            // Update numbers
+            document.getElementById('current-visitors').textContent = data.currentVisitors;
+            document.getElementById('available-seats').textContent = data.availableSeats;
+            document.getElementById('max-capacity').textContent = data.maxCapacity;
+            document.getElementById('occupancy-rate').textContent = data.occupancyRate + '%';
+            document.getElementById('occupancy-bar').style.width = data.occupancyRate + '%';
+
+            // Update occupancy badge
+            const badge = document.getElementById('occupancy-badge');
+            if (data.occupancyRate < 50) {
+                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700';
+                badge.textContent = 'Low';
+            } else if (data.occupancyRate < 80) {
+                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700';
+                badge.textContent = 'Moderate';
+            } else {
+                badge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700';
+                badge.textContent = 'High';
+            }
+
+            // Update status
+            const statusIcon = document.getElementById('status-icon');
+            const statusIconBg = document.getElementById('status-icon-bg');
+            const restaurantStatus = document.getElementById('restaurant-status');
+            const statusMessage = document.getElementById('status-message');
+
+            if (data.isNearCapacity) {
+                statusIcon.className = 'fas fa-exclamation-triangle text-red-600 text-2xl';
+                statusIconBg.className = 'bg-red-100 p-3 rounded-xl';
+                restaurantStatus.textContent = 'Nearly Full';
+                restaurantStatus.className = 'text-2xl font-bold text-red-600';
+                statusMessage.textContent = 'Limited seats available';
+            } else if (data.occupancyRate > 50) {
+                statusIcon.className = 'fas fa-info-circle text-yellow-600 text-2xl';
+                statusIconBg.className = 'bg-yellow-100 p-3 rounded-xl';
+                restaurantStatus.textContent = 'Moderate';
+                restaurantStatus.className = 'text-2xl font-bold text-yellow-600';
+                statusMessage.textContent = 'Good availability';
+            } else {
+                statusIcon.className = 'fas fa-check-circle text-green-600 text-2xl';
+                statusIconBg.className = 'bg-green-100 p-3 rounded-xl';
+                restaurantStatus.textContent = 'Available';
+                restaurantStatus.className = 'text-2xl font-bold text-green-600';
+                statusMessage.textContent = 'Seats available';
+            }
+        }
+
+        // Update history chart
+        function updateHistoryChart(history) {
+            if (history.length === 0) return;
+
+            const labels = history.map(item => {
+                const time = new Date(item.timestamp);
+                return time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            });
+            const data = history.map(item => item.currentVisitors);
+
+            visitorsChart.data.labels = labels;
+            visitorsChart.data.datasets[0].data = data;
+            visitorsChart.update();
+        }
+
+        // Update hourly chart
+        function updateHourlyChart(hourlyData) {
+            const data = Array(24).fill(0);
+            hourlyData.forEach(item => {
+                data[item.hour] = item.avgVisitors;
+            });
+
+            hourlyChart.data.datasets[0].data = data;
+            hourlyChart.update();
+        }
+
+        // Update recent activity list
+        function updateActivityList(history) {
+            const activityList = document.getElementById('activity-list');
+            const recentActivities = history.slice(-10).reverse();
+
+            activityList.innerHTML = recentActivities.map(activity => {
+                const time = new Date(activity.timestamp).toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit' 
+                });
+                
+                let icon, color, text;
+                if (activity.action === 'enter') {
+                    icon = 'fa-arrow-right';
+                    color = 'text-green-600';
+                    text = `${activity.count} visitor(s) entered`;
+                } else if (activity.action === 'exit') {
+                    icon = 'fa-arrow-left';
+                    color = 'text-red-600';
+                    text = `${activity.count} visitor(s) exited`;
+                } else if (activity.action === 'reset') {
+                    icon = 'fa-redo';
+                    color = 'text-gray-600';
+                    text = 'Counter reset';
+                } else {
+                    icon = 'fa-cog';
+                    color = 'text-blue-600';
+                    text = 'Manual adjustment';
+                }
+
+                return `
+                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-white p-2 rounded-lg shadow-sm">
+                                <i class="fas ${icon} ${color}"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">${text}</p>
+                                <p class="text-xs text-gray-500">${time}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm font-semibold text-gray-700">${activity.currentVisitors}</p>
+                            <p class="text-xs text-gray-500">visitors</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // API Functions
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                updateDashboard(data);
+            } catch (error) {
+                console.error('Error fetching status:', error);
+            }
+        }
+
+        async function fetchHistory() {
+            try {
+                const response = await fetch('/api/history?limit=30');
+                const data = await response.json();
+                updateHistoryChart(data.history);
+                updateActivityList(data.history);
+            } catch (error) {
+                console.error('Error fetching history:', error);
+            }
+        }
+
+        async function fetchHourlyStats() {
+            try {
+                const response = await fetch('/api/stats/hourly');
+                const data = await response.json();
+                updateHourlyChart(data.hourlyData);
+            } catch (error) {
+                console.error('Error fetching hourly stats:', error);
+            }
+        }
+
+        async function updateVisitors(action, count) {
+            try {
+                const response = await fetch('/api/visitors/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ action, count })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    await refreshAll();
+                }
+            } catch (error) {
+                console.error('Error updating visitors:', error);
+            }
+        }
+
+        async function simulateVisitors() {
+            try {
+                const response = await fetch('/api/test/simulate', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if (data.success) {
+                    await refreshAll();
+                }
+            } catch (error) {
+                console.error('Error simulating visitors:', error);
+            }
+        }
+
+        async function resetVisitors() {
+            if (confirm('Are you sure you want to reset the visitor count to 0?')) {
+                try {
+                    const response = await fetch('/api/visitors/reset', {
+                        method: 'POST'
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        await refreshAll();
+                    }
+                } catch (error) {
+                    console.error('Error resetting visitors:', error);
+                }
+            }
+        }
+
+        async function refreshAll() {
+            await fetchStatus();
+            await fetchHistory();
+            await fetchHourlyStats();
+        }
+
+        // Update footer time
+        function updateFooterTime() {
+            const now = new Date();
+            document.getElementById('footer-time').textContent = 
+                now.toLocaleString('en-US', { 
+                    dateStyle: 'medium', 
+                    timeStyle: 'medium' 
+                });
+        }
+
+        // ESP functions
+        let espEndpoint;
+        let eventSource = null;
+        var SSE_URL;
+        const espStatus = document.getElementById('espStatus');
+        const connectBtn = document.getElementById('connectBtn');
+        const espStatusText = document.getElementById('espStatusText');
+
+        function connectToESP32(value) {
+            SSE_URL = value;
+            console.log(`🔗 Connecting to ESP32 at ${SSE_URL}...`);
+  
+            if (eventSource) {
+                eventSource.close();
+            }
+            
+            eventSource = new EventSource(SSE_URL);
+            
+            eventSource.addEventListener('open', () => {
+                console.log("✅ Connected to Gate System");
+                updateConnectionStatus(true);
+                espStatusText.innerHTML = '<i class="fa-solid fa-wifi pe-3"></i>Connected!'
+            });
+            
+            eventSource.addEventListener('message', (event) => {
+                try {
+                const message = JSON.parse(event.data);
+                console.log("📨 Gate event:", message);
+                
+                if (message.action === 'add') {
+                    updateVisitors('enter', 1);
+                } else if (message.action === 'reduce') {
+                    updateVisitors('exit', 1);
+                }
+                } catch (error) {
+                console.error("Error parsing message:", error);
+                }
+            });
+            
+            eventSource.addEventListener('error', () => {
+                console.error("❌ Connection error");
+                updateConnectionStatus(false);
+            });
+
+            updateConnectionStatus(espStatus.classList.contains('hidden'));
+        }
+
+        function updateConnectionStatus(connected) {
+            espStatus.classList.toggle('hidden');
+
+            if (connected) {
+                connectBtn.innerHTML = '<i class="fa-solid fa-unlink"></i> Disconnect';
+                connectBtn.className = 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105';
+            } else {
+                connectBtn.innerHTML = '<i class="fa-solid fa-link"></i> Connect';
+                connectBtn.className = 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105';
+                espStatusText.innerHTML = '<i class="fa-solid fa-wifi pe-3"></i>Connecting...'
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            refreshAll();
+            updateFooterTime();
+            connectToESP32(document.getElementById('espconnect').value)
+
+            // Auto refresh every 2 seconds
+            setInterval(fetchStatus, 2000);
+            setInterval(fetchHistory, 5000);
+            setInterval(fetchHourlyStats, 60000); // Every minute
+            setInterval(updateFooterTime, 1000);
+        });
+
+        window.addEventListener('beforeunload', () => eventSource?.close());
+    </script>
+</body>
+</html>

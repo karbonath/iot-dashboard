@@ -1,0 +1,10 @@
+{
+  "config": {
+    "maxCapacity": 100,
+    "name": "Restaurant Dashboard",
+    "alertThreshold": 80
+  },
+  "currentVisitors": 0,
+  "history": [],
+  "dailyStats": {}
+}
